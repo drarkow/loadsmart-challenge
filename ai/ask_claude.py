@@ -1,4 +1,4 @@
-"""Natural-language question -> Claude SQL generation -> DuckDB execution."""
+"""Natural-language question -> Claude SQL -> read-only DuckDB execution."""
 from __future__ import annotations
 
 import argparse
@@ -13,31 +13,34 @@ from anthropic import Anthropic
 
 from semantic_context import build_context
 
+
 SYSTEM_PROMPT = """
-You are a senior analytics engineer working over a documented Loadsmart dbt dimensional model.
+You are a senior analytics engineer working over a documented dbt dimensional model.
 Generate exactly one read-only DuckDB SQL query for the user's question.
 
 Rules:
 1. Use only relations and columns present in the supplied dbt metadata.
-2. Never invent columns, tables, business entities, or source rows.
-3. Prefer the dimensional model (fct_loads and dimensions) over raw data.
-4. Use fct_loads.is_delivered for questions explicitly asking about delivered loads.
-5. A delivered load is defined in the model documentation as a non-cancelled load with a delivery timestamp.
-6. For "intrastate" versus "interstate", use the modeled haul_type field.
-7. When a question is ambiguous, prefer the business definition explicitly documented in the dbt metadata.
-8. For time-series questions, use dim_date when zero-activity periods should remain visible.
-9. Return SQL only. No markdown fences and no explanation.
+2. Prefer the documented analytics dimensional models over staging/raw relations.
+3. Treat dbt model and column descriptions as the source of truth for business semantics.
+4. Use documented semantic fields when available instead of recreating their definitions.
+5. Do not invent business rules, entities, columns, tables, or values that are absent from the metadata.
+6. Obtain factual results by executing SQL; never answer from assumptions or prompt-included rows.
+7. The query must be read-only and contain exactly one SQL statement.
+8. Return SQL only, with no markdown fences or explanation.
 """.strip()
 
 
 def extract_sql(text: str) -> str:
     match = re.search(r"```(?:sql)?\s*(.*?)```", text, flags=re.IGNORECASE | re.DOTALL)
     sql = match.group(1).strip() if match else text.strip()
-    sql = sql.strip().rstrip(";")
+    sql = sql.rstrip(";\n ").strip()
+
     if not re.match(r"^(select|with)\b", sql, flags=re.IGNORECASE):
         raise ValueError("Claude returned non-read-only SQL")
-    if re.search(r"\b(insert|update|delete|drop|alter|create|truncate|attach|copy|export|install|load)\b", sql, flags=re.IGNORECASE):
-        raise ValueError("Potentially mutating SQL was rejected")
+    if ";" in sql:
+        raise ValueError("Multiple SQL statements are not allowed")
+    if re.search(r"\b(insert|update|delete|drop|alter|create|truncate|attach|copy|export|install|load|call)\b", sql, flags=re.IGNORECASE):
+        raise ValueError("Potentially mutating or administrative SQL was rejected")
     return sql
 
 
@@ -71,6 +74,7 @@ def run_question(
 ) -> dict[str, Any]:
     context = build_context(manifest, catalog)
     client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
     sql = generate_sql(client, model, question, context)
 
     with duckdb.connect(str(duckdb_path), read_only=True) as con:
@@ -88,10 +92,20 @@ def main() -> None:
     parser.add_argument("question")
     parser.add_argument("--manifest", default="dbt_loadsmart/target/manifest.json")
     parser.add_argument("--catalog", default="dbt_loadsmart/target/catalog.json")
-    parser.add_argument("--duckdb", default=os.environ.get("DUCKDB_PATH", "data/loadsmart.duckdb"))
-    parser.add_argument("--model", default=os.environ.get("CLAUDE_MODEL", "claude-sonnet-5"))
+    parser.add_argument(
+        "--duckdb",
+        default=os.environ.get("DUCKDB_PATH", "loadsmart.duckdb"),
+    )
+    parser.add_argument(
+        "--model",
+        default=os.environ.get("CLAUDE_MODEL", "claude-sonnet-5"),
+    )
     parser.add_argument("--output")
     args = parser.parse_args()
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
 
     result = run_question(
         args.question,
@@ -100,9 +114,13 @@ def main() -> None:
         Path(args.duckdb),
         args.model,
     )
+
     print(json.dumps(result, indent=2, default=str))
     if args.output:
-        Path(args.output).write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+        Path(args.output).write_text(
+            json.dumps(result, indent=2, default=str),
+            encoding="utf-8",
+        )
 
 
 if __name__ == "__main__":
