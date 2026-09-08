@@ -10,3 +10,4 @@ dbt_loadsmart/dbt_packages/
 analysis/dbt_semantic_context.json
 *.log
 .DS_Store
+notes.md
