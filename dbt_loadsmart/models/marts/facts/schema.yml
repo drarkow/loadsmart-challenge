@@ -1,0 +1,98 @@
+version: 2
+
+models:
+  - name: fct_loads
+    description: >-
+      Fact table at one row per distinct loadsmart_id. Measures describe the booked/sourced load;
+      is_delivered identifies delivered loads for the challenge's delivered-load questions.
+    columns:
+      - name: loadsmart_id
+        description: "Business identifier for the load; this is the fact grain."
+        tests: [not_null, unique]
+      - name: shipper_key
+        description: "Surrogate key to dim_shipper."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_shipper')
+              field: shipper_key
+      - name: carrier_key
+        description: "Surrogate key to dim_carrier; null source carrier names map to the unknown member."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_carrier')
+              field: carrier_key
+      - name: lane_key
+        description: "Surrogate key to dim_lane."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_lane')
+              field: lane_key
+      - name: pickup_date
+        description: "Calendar date extracted from pickup_at."
+      - name: delivery_date
+        description: "Calendar date extracted from delivered_at."
+      - name: quote_at
+        description: "Timestamp when the load was quoted in the source system."
+      - name: booked_at
+        description: "Timestamp when the load was booked."
+      - name: sourced_at
+        description: "Timestamp when the load was sourced."
+      - name: pickup_at
+        description: "Pickup timestamp from the source data."
+      - name: delivered_at
+        description: "Delivery timestamp from the source data."
+      - name: book_price
+        description: "Customer-facing booked price for the load. Zero values are retained because the source does not establish them as invalid."
+        tests: [not_null]
+      - name: source_price
+        description: "Source/carrier price for the load."
+      - name: pnl
+        description: "Load-level P&L from the source. Negative values are retained."
+      - name: mileage
+        description: "Load mileage from the source."
+      - name: equipment_type
+        description: "Equipment code, e.g. DRV, RFR, FBE."
+      - name: carrier_rating
+        description: "Carrier rating when available; the source is highly sparse."
+      - name: sourcing_channel
+        description: "Source channel used to source the load; highly sparse in the source."
+      - name: vip_carrier
+        description: "Whether the carrier is flagged VIP."
+      - name: carrier_dropped_us_count
+        description: "Count of carrier drops associated with the load."
+      - name: carrier_on_time_to_pickup
+        description: "Carrier on-time indicator for pickup; nullable in source."
+      - name: carrier_on_time_to_delivery
+        description: "Carrier on-time indicator for delivery; nullable in source."
+      - name: carrier_on_time_overall
+        description: "Overall carrier on-time indicator; nullable in source."
+      - name: pickup_appointment_at
+        description: "Pickup appointment timestamp."
+      - name: delivery_appointment_at
+        description: "Delivery appointment timestamp."
+      - name: has_mobile_app_tracking
+        description: "Whether mobile app tracking is enabled. The duplicate source field has been excluded."
+      - name: has_macropoint_tracking
+        description: "Whether Macropoint tracking is enabled."
+      - name: has_edi_tracking
+        description: "Whether EDI tracking is enabled."
+      - name: contracted_load
+        description: "Whether the load is contracted."
+      - name: load_booked_autonomously
+        description: "Whether the load was booked autonomously."
+      - name: load_sourced_autonomously
+        description: "Whether the load was sourced autonomously."
+      - name: load_was_cancelled
+        description: "Source cancellation flag."
+        tests: [not_null]
+      - name: is_delivered
+        description: "Derived delivered-load flag: not cancelled and delivered_at is present."
+        tests: [not_null]
+      - name: haul_type
+        description: "Intrastate when pickup and delivery states match; interstate otherwise."
+        tests:
+          - accepted_values:
+              values: ['intrastate', 'interstate']

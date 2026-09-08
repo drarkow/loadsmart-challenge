@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: stg_loads
+    description: >-
+      One row per distinct loadsmart_id after exact duplicate removal and source-field normalization.
+      This model is the first semantic layer over the raw seed. Pickup and delivery cities/states are
+      parsed from lane, and is_delivered means the load is not cancelled and has a delivery timestamp.
+    columns:
+      - name: loadsmart_id
+        description: "Unique identifier for a load. Exact duplicate source rows are collapsed to one row."
+        tests:
+          - not_null
+          - unique
+      - name: lane
+        description: "Original route string in the form Pickup City,ST -> Delivery City,ST."
+        tests:
+          - not_null
+      - name: pickup_city
+        description: "Pickup city parsed from lane."
+        tests:
+          - not_null
+      - name: pickup_state
+        description: "Two-letter pickup state parsed from lane."
+        tests:
+          - not_null
+      - name: delivery_city
+        description: "Delivery city parsed from lane."
+        tests:
+          - not_null
+      - name: delivery_state
+        description: "Two-letter delivery state parsed from lane."
+        tests:
+          - not_null
+      - name: book_price
+        description: "Book price charged for the load. Zero values exist in source and are retained."
+        tests:
+          - not_null
+      - name: load_was_cancelled
+        description: "Source cancellation flag."
+        tests:
+          - not_null
+      - name: is_delivered
+        description: >-
+          Derived delivered-load flag: load_was_cancelled is false and delivered_at is present.
+          This deliberately does not use delivery_at >= pickup_at because source date anomalies are retained.
+        tests:
+          - not_null

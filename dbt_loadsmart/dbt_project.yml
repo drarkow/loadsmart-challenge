@@ -1,0 +1,25 @@
+name: 'loadsmart_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'loadsmart_analytics'
+model-paths: ['models']
+seed-paths: ['seeds']
+test-paths: ['tests']
+macro-paths: ['macros']
+analysis-paths: ['analysis']
+
+models:
+  loadsmart_analytics:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: analytics
+      +materialized: table
+
+seeds:
+  loadsmart_analytics:
+    raw_loads:
+      +schema: raw
+      +quote_columns: true
