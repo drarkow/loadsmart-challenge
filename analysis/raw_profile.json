@@ -1,0 +1,193 @@
+{
+  "row_count": 5361,
+  "column_count": 31,
+  "columns": {
+    "loadsmart_id": {
+      "dtype": "int64",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 5357
+    },
+    "lane": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 1570
+    },
+    "quote_date": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 5207
+    },
+    "book_date": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 5203
+    },
+    "source_date": {
+      "dtype": "object",
+      "null_count": 1499,
+      "null_pct": 27.961,
+      "distinct_count": 3734
+    },
+    "pickup_date": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 3032
+    },
+    "delivery_date": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 4667
+    },
+    "book_price": {
+      "dtype": "float64",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 2661
+    },
+    "source_price": {
+      "dtype": "float64",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 533
+    },
+    "pnl": {
+      "dtype": "float64",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 2879
+    },
+    "mileage": {
+      "dtype": "float64",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 1567
+    },
+    "equipment_type": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 3
+    },
+    "carrier_rating": {
+      "dtype": "float64",
+      "null_count": 4614,
+      "null_pct": 86.066,
+      "distinct_count": 6
+    },
+    "sourcing_channel": {
+      "dtype": "object",
+      "null_count": 5117,
+      "null_pct": 95.449,
+      "distinct_count": 8
+    },
+    "vip_carrier": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 2
+    },
+    "carrier_dropped_us_count": {
+      "dtype": "int64",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 4
+    },
+    "carrier_name": {
+      "dtype": "object",
+      "null_count": 499,
+      "null_pct": 9.308,
+      "distinct_count": 2202
+    },
+    "shipper_name": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 94
+    },
+    "carrier_on_time_to_pickup": {
+      "dtype": "object",
+      "null_count": 606,
+      "null_pct": 11.304,
+      "distinct_count": 2
+    },
+    "carrier_on_time_to_delivery": {
+      "dtype": "object",
+      "null_count": 606,
+      "null_pct": 11.304,
+      "distinct_count": 2
+    },
+    "carrier_on_time_overall": {
+      "dtype": "object",
+      "null_count": 606,
+      "null_pct": 11.304,
+      "distinct_count": 2
+    },
+    "pickup_appointment_time": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 2841
+    },
+    "delivery_appointment_time": {
+      "dtype": "object",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 3395
+    },
+    "has_mobile_app_tracking": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 1
+    },
+    "has_mobile_app_tracking.1": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 1
+    },
+    "has_macropoint_tracking": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 1
+    },
+    "has_edi_tracking": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 1
+    },
+    "contracted_load": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 1
+    },
+    "load_booked_autonomously": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 2
+    },
+    "load_sourced_autonomously": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 2
+    },
+    "load_was_cancelled": {
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "distinct_count": 2
+    }
+  },
+  "duplicate_row_count": 4
+}
