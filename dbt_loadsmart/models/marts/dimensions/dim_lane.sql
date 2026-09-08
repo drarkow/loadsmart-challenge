@@ -6,8 +6,5 @@ select
     delivery_city,
     delivery_state,
     haul_type
-from (
-    select distinct
-        lane, pickup_city, pickup_state, delivery_city, delivery_state, haul_type
-    from {{ ref('stg_loads') }}
-)
+from {{ ref('stg_loads') }}
+group by 1,2,3,4,5,6,7

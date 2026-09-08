@@ -1,0 +1,199 @@
+version: 2
+
+models:
+  - name: dim_shipper
+    description: "One row per distinct shipper name used by loads in the modeled dataset."
+    columns:
+      - name: shipper_key
+        description: "Stable hash key derived from shipper_name; unknown/null names use a reserved placeholder."
+        tests:
+          - not_null
+          - unique
+
+      - name: shipper_name
+        description: "Business name of the shipper."
+
+  - name: dim_carrier
+    description: "One row per distinct carrier name used by loads in the modeled dataset."
+    columns:
+      - name: carrier_key
+        description: "Stable hash key derived from carrier_name; unknown/null names use a reserved placeholder."
+        tests:
+          - not_null
+          - unique
+
+      - name: carrier_name
+        description: "Business name of the carrier; null when the source did not identify a carrier."
+
+  - name: dim_lane
+    description: "One row per distinct source lane, parsed into pickup and delivery geography and haul type."
+    columns:
+      - name: lane_key
+        description: "Stable hash key derived from the source lane string."
+        tests:
+          - not_null
+          - unique
+
+      - name: lane
+        description: "Original lane string in Pickup City,ST -> Delivery City,ST format."
+        tests:
+          - not_null
+
+      - name: pickup_state
+        description: "Two-letter pickup state."
+        tests:
+          - not_null
+
+      - name: delivery_state
+        description: "Two-letter delivery state."
+        tests:
+          - not_null
+
+      - name: haul_type
+        description: "intrastate when pickup_state equals delivery_state; otherwise interstate."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - intrastate
+                  - interstate
+
+  - name: dim_date
+    description: >-
+      Complete calendar from the earliest to latest lifecycle date in the modeled data;
+      useful for time-series queries where zero-activity days or months must remain visible.
+    columns:
+      - name: date_day
+        description: "Calendar date."
+        tests:
+          - not_null
+          - unique
+
+      - name: month_start_date
+        description: "First calendar day of the month."
+        tests:
+          - not_null
+
+      - name: year_month
+        description: "Calendar month formatted YYYY-MM."
+        tests:
+          - not_null
+
+  - name: fct_loads
+    description: >-
+      One row per distinct loadsmart_id. Measures and load-level attributes live here.
+      A delivered load is defined as a non-cancelled load with a non-null delivery timestamp.
+      Source timestamp anomalies are retained; is_delivered does not require delivery >= pickup.
+    columns:
+      - name: loadsmart_id
+        description: "Unique load identifier and fact grain."
+        tests:
+          - not_null
+          - unique
+
+      - name: shipper_key
+        description: "Foreign key to dim_shipper."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_shipper')
+                field: shipper_key
+
+      - name: carrier_key
+        description: "Foreign key to dim_carrier. Unknown carrier values map to a reserved key."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_carrier')
+                field: carrier_key
+
+      - name: lane_key
+        description: "Foreign key to dim_lane."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_lane')
+                field: lane_key
+
+      - name: quote_date
+        description: "Calendar date on which the load was quoted."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: booked_date
+        description: "Calendar date on which the load was booked."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: sourced_date
+        description: "Calendar date on which the load was sourced; may be null."
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: pickup_date
+        description: "Calendar date of pickup."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: delivery_date
+        description: "Calendar date of delivery; present for all source rows."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: book_price
+        description: "Book price for the load in source currency units. Zero values are retained."
+        tests:
+          - not_null
+
+      - name: source_price
+        description: "Source price for the load in source currency units. Zero values are retained."
+        tests:
+          - not_null
+
+      - name: pnl
+        description: "Load-level profit and loss; negative values are retained."
+        tests:
+          - not_null
+
+      - name: load_was_cancelled
+        description: "Source cancellation flag."
+        tests:
+          - not_null
+
+      - name: is_delivered
+        description: "True when the load is not cancelled and has a delivery timestamp."
+        tests:
+          - not_null
+
+      - name: haul_type
+        description: "Denormalized convenience attribute matching dim_lane.haul_type."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - intrastate
+                  - interstate

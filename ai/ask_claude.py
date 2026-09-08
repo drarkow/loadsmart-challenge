@@ -24,7 +24,9 @@ Rules:
 4. Use fct_loads.is_delivered for questions explicitly asking about delivered loads.
 5. A delivered load is defined in the model documentation as a non-cancelled load with a delivery timestamp.
 6. For "intrastate" versus "interstate", use the modeled haul_type field.
-7. Return SQL only. No markdown fences and no explanation.
+7. When a question is ambiguous, prefer the business definition explicitly documented in the dbt metadata.
+8. For time-series questions, use dim_date when zero-activity periods should remain visible.
+9. Return SQL only. No markdown fences and no explanation.
 """.strip()
 
 

@@ -1,8 +1,11 @@
 select
     s.loadsmart_id,
-    md5(coalesce(s.shipper_name, '__unknown__')) as shipper_key,
-    md5(coalesce(s.carrier_name, '__unknown__')) as carrier_key,
-    md5(s.lane) as lane_key,
+    ds.shipper_key,
+    dc.carrier_key,
+    dl.lane_key,
+    cast(s.quote_at as date) as quote_date,
+    cast(s.booked_at as date) as booked_date,
+    cast(s.sourced_at as date) as sourced_date,
     cast(s.pickup_at as date) as pickup_date,
     cast(s.delivered_at as date) as delivery_date,
     s.quote_at,
@@ -34,3 +37,6 @@ select
     s.is_delivered,
     s.haul_type
 from {{ ref('stg_loads') }} s
+left join {{ ref('dim_shipper') }} ds on md5(coalesce(s.shipper_name, '__unknown__')) = ds.shipper_key
+left join {{ ref('dim_carrier') }} dc on md5(coalesce(s.carrier_name, '__unknown__')) = dc.carrier_key
+left join {{ ref('dim_lane') }} dl on md5(s.lane) = dl.lane_key

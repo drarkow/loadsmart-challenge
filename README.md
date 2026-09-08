@@ -25,7 +25,7 @@ analytics star schema
              `--> Claude metadata-to-SQL layer
 ```
 
-The raw source is retained through `dbt seed`. Data-quality findings are documented before business semantics are applied.
+The raw source is retained through `dbt seed`. Data-quality findings are documented before business semantics are applied. The dimensional fact grain is one row per distinct `loadsmart_id`.
 
 ## Why DuckDB
 
@@ -58,7 +58,7 @@ DUCKDB_PATH=data/loadsmart.duckdb
 
 See `analysis/data_quality_profile.md` and `analysis/business_definitions.md`.
 
-Key findings include four exact duplicate source rows, sparse carrier/sourcing attributes, 517 cancelled loads, zero-value financial fields, and delivery/pickup timestamp anomalies. The anomalies are retained and documented rather than silently filtered.
+Key findings include four exact duplicate source rows, sparse carrier/sourcing attributes, 517 cancelled loads, zero-value financial fields, and delivery/pickup timestamp anomalies. The source-level duplicate rows are removed in staging, not in the raw seed. The anomalies are retained and documented rather than silently filtered.
 
 ## AI layer
 

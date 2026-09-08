@@ -2,9 +2,9 @@ questions:
   - id: q1
     question: "How many loads were delivered in the last full month available in the data?"
     assumption: >-
-      Interpret "last full month available" as the latest calendar month with delivered-load activity
-      before the final partial delivery month. In this dataset, March 2025 has one delivery dated March 15,
-      so January 2025 is treated as the last full month with activity; February has no delivery records.
+      Interpret "last full month available" as the latest complete calendar month before the final partial
+      delivery month. In this dataset, March 2025 has one delivery dated March 15, so February 2025 is
+      treated as the last full month, even though it has no delivered rows.
     business_definition: "Delivered = not cancelled and delivery timestamp is present."
 
   - id: q2

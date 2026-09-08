@@ -1,0 +1,10 @@
+version: 2
+
+seeds:
+  - name: raw_loads
+    description: "Raw challenge CSV loaded without business transformations."
+    columns:
+      - name: loadsmart_id
+        description: "Source load identifier; duplicates exist in the raw extract and are resolved in staging."
+      - name: has_mobile_app_tracking.1
+        description: "Apparent duplicate of has_mobile_app_tracking in the source. Retained only in raw for auditability; not used downstream."
