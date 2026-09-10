@@ -41,7 +41,6 @@ questions:
     assumption:  Define lane P&L ratio as total P&L divided by total book price for the lane. Use all modeled loads and exclude lanes where total book price is zero.
     business_definition: "pnl ratio is pnl divided by the book price"
 
-
   - id: q10
     question: "Among carriers with ratings, what is the average carrier rating and number of ratings for each carrier with rating below 3?"
     why_it_matters: "Understand how each carrier performs in comparison to others and if any of those are below quality standards."
