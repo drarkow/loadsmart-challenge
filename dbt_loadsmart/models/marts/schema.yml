@@ -178,6 +178,33 @@ models:
         tests:
           - not_null
 
+      - name: mileage
+        description: "Amount of miles between pickup and delivery."
+        tests:
+          - not_null
+
+      - name: equipment_type
+        description: "The equipment used to deliver the load."
+        tests:
+          - not_null
+
+      - name: vip_carrier
+        description: "If carrier is vip flag"
+        tests:
+          - not_null
+
+      - name: carrier_rating
+        description: "Rating given to carrier for that specific load"
+
+      - name: carrier_on_time_to_pickup
+        description: "If the carrier was on time scheduled for pickup flag."
+
+      - name: carrier_on_time_to_delivery
+        description: "If the carrier was on time scheduled for delivery flag."
+
+      - name: carrier_on_time_overall
+        description: "If the carrier was on time for both pickup and delivery flag."
+
       - name: load_was_cancelled
         description: "Source cancellation flag."
         tests:
