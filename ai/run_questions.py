@@ -1,4 +1,5 @@
 """Run the configured AI question set and save results as JSONL."""
+
 from __future__ import annotations
 
 import argparse
@@ -90,14 +91,20 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Resolve all paths from the project root.
+    # -----------------------------------------------------------------------
+    # Resolve paths
+    # -----------------------------------------------------------------------
+
     questions_path = resolve_project_path(args.questions)
     manifest_path = resolve_project_path(args.manifest)
     catalog_path = resolve_project_path(args.catalog)
     duckdb_path = resolve_project_path(args.duckdb)
     output_path = resolve_project_path(args.output)
 
-    # Validate files before making any Claude API calls.
+    # -----------------------------------------------------------------------
+    # Validate files before making Claude API calls
+    # -----------------------------------------------------------------------
+
     for label, path in (
         ("Questions file", questions_path),
         ("Manifest", manifest_path),
@@ -109,23 +116,38 @@ def main() -> None:
                 f"{label} not found: {path}"
             )
 
+    # -----------------------------------------------------------------------
+    # Load question set
+    # -----------------------------------------------------------------------
+
     question_doc = yaml.safe_load(
         questions_path.read_text(
             encoding="utf-8"
         )
     )
 
-    questions = question_doc.get("questions", [])
+    questions = question_doc.get(
+        "questions",
+        [],
+    )
 
     if not questions:
         raise ValueError(
             f"No questions found in {questions_path}"
         )
 
+    # -----------------------------------------------------------------------
+    # Prepare output directory
+    # -----------------------------------------------------------------------
+
     output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
+
+    # -----------------------------------------------------------------------
+    # Run questions
+    # -----------------------------------------------------------------------
 
     with output_path.open(
         "w",
@@ -143,34 +165,47 @@ def main() -> None:
             try:
                 result = run_question(
                     question=question,
-                    manifest=manifest_path,
-                    catalog=catalog_path,
+                    manifest_path=manifest_path,
+                    catalog_path=catalog_path,
                     duckdb_path=duckdb_path,
                     model=args.model,
                 )
 
-                # Preserve the question-set ID in the result.
+                # Preserve the question-set ID.
                 result["id"] = question_id
 
             except Exception as exc:
+                # Keep the full question run going even if one question fails.
                 result = {
                     "id": question_id,
                     "question": question,
+                    "status": "error",
                     "error": type(exc).__name__,
                     "error_message": str(exc),
                 }
 
-            # Preserve useful metadata from questions.yml.
+            # ----------------------------------------------------------------
+            # Preserve useful metadata from questions.yml
+            # ----------------------------------------------------------------
+
             if "why_it_matters" in item:
-                result["why_it_matters"] = item["why_it_matters"]
+                result["why_it_matters"] = item[
+                    "why_it_matters"
+                ]
 
             if "assumption" in item:
-                result["assumption"] = item["assumption"]
+                result["assumption"] = item[
+                    "assumption"
+                ]
 
             if "what_needs_change" in item:
                 result["what_needs_change"] = item[
                     "what_needs_change"
                 ]
+
+            # ----------------------------------------------------------------
+            # Write one JSON object per line
+            # ----------------------------------------------------------------
 
             handle.write(
                 json.dumps(

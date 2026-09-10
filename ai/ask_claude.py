@@ -1,4 +1,5 @@
 """Natural-language question -> Claude SQL -> read-only DuckDB execution."""
+
 from __future__ import annotations
 
 import argparse
@@ -6,7 +7,6 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any
 
 import duckdb
 from anthropic import Anthropic
@@ -19,11 +19,11 @@ from semantic_context import build_context
 # Project configuration
 # ---------------------------------------------------------------------------
 
-# Resolve paths relative to the repository root rather than the current
-# working directory. This keeps the project portable across machines.
+# Repository root:
+# <project_root>/ai/ask_claude.py
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# Load variables from the project's .env file.
+# Load the project-level .env file.
 load_dotenv(PROJECT_ROOT / ".env")
 
 
@@ -33,17 +33,55 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 SYSTEM_PROMPT = """
 You are a senior analytics engineer working over a documented dbt dimensional model.
-Generate exactly one read-only DuckDB SQL query for the user's question.
+
+Your task is to determine whether the user's question can be answered using the
+supplied dbt metadata, and, only when it can, generate exactly one read-only
+DuckDB SQL query.
 
 Rules:
+
 1. Use only relations and columns present in the supplied dbt metadata.
-2. Prefer the documented analytics dimensional models over staging/raw relations.
-3. Treat dbt model and column descriptions as the source of truth for business semantics.
-4. Use documented semantic fields when available instead of recreating their definitions.
-5. Do not invent business rules, entities, columns, tables, or values that are absent from the metadata.
-6. Obtain factual results by executing SQL; never answer from assumptions or prompt-included rows.
-7. The query must be read-only and contain exactly one SQL statement.
-8. Return SQL only, with no markdown fences or explanation.
+
+2. Prefer documented analytics dimensional models over staging/raw relations.
+
+3. Treat dbt model and column descriptions as the source of truth for business
+   semantics.
+
+4. Use documented semantic fields and definitions when available instead of
+   recreating them.
+
+5. Do not invent business rules, entities, columns, tables, values, or metric
+   definitions that are absent from the metadata.
+
+6. Before writing SQL, check whether every important concept in the question is
+   supported by the documented model.
+
+7. Do not silently replace an undefined metric with a related metric.
+
+   Examples:
+   - "profitability after overhead" is NOT the same as "pnl > 0"
+   - "pnl ratio" is NOT automatically pnl / book_price
+   - a rating metric cannot be inferred from an unrelated carrier attribute
+
+8. If the question requires information, business definitions, or calculations
+   that are not documented in the model, do not generate SQL.
+
+   Instead return exactly:
+   UNSUPPORTED: <brief explanation of what is missing>
+
+9. If the question is answerable, generate exactly one read-only DuckDB SQL query.
+
+10. The SQL must use only documented relations and columns and must be a single
+    SELECT or WITH statement.
+
+11. Obtain factual results by executing the generated SQL against the database.
+    Never answer from assumptions or from rows included in the prompt.
+
+12. Return either:
+    - a single SQL query, if the question is answerable
+    - an UNSUPPORTED message, if it is not
+
+13. Do not return markdown fences, explanations, or any other text.
 """.strip()
 
 
@@ -53,7 +91,7 @@ Rules:
 
 def resolve_project_path(path_value: str | Path) -> Path:
     """
-    Resolve a path relative to the project root unless it is absolute.
+    Resolve a path relative to the repository root unless it is absolute.
 
     Example:
         data/loadsmart.duckdb
@@ -73,46 +111,63 @@ def resolve_project_path(path_value: str | Path) -> Path:
 
 def extract_sql(text: str) -> str:
     """
-    Extract SQL from Claude's response and validate that it is one
-    read-only SELECT/CTE statement.
+    Validate Claude's response.
+
+    Valid responses are either:
+      - a single read-only SELECT/WITH query
+      - an UNSUPPORTED: ... response
     """
-    # Support accidental markdown fences even though the prompt asks
-    # Claude not to use them.
-    match = re.search(
-        r"```(?:sql)?\s*(.*?)```",
+    text = text.strip()
+
+    # Explicitly supported non-answer.
+    if text.startswith("UNSUPPORTED:"):
+        return text
+
+    # Remove markdown fences if Claude ignores the formatting instruction.
+    text = re.sub(
+        r"^```(?:sql)?\s*",
+        "",
         text,
-        flags=re.IGNORECASE | re.DOTALL,
+        flags=re.IGNORECASE,
     )
 
-    sql = match.group(1).strip() if match else text.strip()
+    text = re.sub(
+        r"\s*```$",
+        "",
+        text,
+    )
 
-    # Remove a trailing semicolon so we can detect multiple statements
-    # consistently.
-    sql = sql.rstrip(";\n ").strip()
+    # Only SELECT / WITH queries are allowed.
+    if not re.match(
+        r"^(select|with)\b",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        raise ValueError(
+            f"Claude returned invalid SQL.\nRaw response:\n{text}"
+        )
 
-    # Only SELECT statements and CTEs are allowed.
-    if not re.match(r"^(select|with)\b", sql, flags=re.IGNORECASE):
-        raise ValueError("Claude returned non-read-only SQL")
+    # Reject multiple statements.
+    if ";" in text.rstrip(";"):
+        raise ValueError(
+            "Claude returned multiple SQL statements."
+        )
 
-    # A semicolon anywhere in the remaining SQL would indicate multiple
-    # statements.
-    if ";" in sql:
-        raise ValueError("Multiple SQL statements are not allowed")
-
-    # Reject mutating or administrative statements/functions.
-    forbidden = (
+    # Reject write / DDL / administrative operations.
+    forbidden = re.compile(
         r"\b("
         r"insert|update|delete|drop|alter|create|truncate|"
         r"attach|copy|export|install|load|call"
-        r")\b"
+        r")\b",
+        flags=re.IGNORECASE,
     )
 
-    if re.search(forbidden, sql, flags=re.IGNORECASE):
+    if forbidden.search(text):
         raise ValueError(
-            "Potentially mutating or administrative SQL was rejected"
+            "Claude returned non-read-only SQL."
         )
 
-    return sql
+    return text
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +180,7 @@ def generate_sql(
     question: str,
     context: str,
 ) -> str:
-    """Ask Claude to generate SQL using only the dbt-derived metadata."""
+    """Ask Claude to generate SQL or an UNSUPPORTED response."""
     response = client.messages.create(
         model=model,
         max_tokens=1200,
@@ -152,9 +207,9 @@ def generate_sql(
     ]
 
     if not text_blocks:
-        raise ValueError("Claude returned no text")
+        raise ValueError("Claude returned no text.")
 
-    return extract_sql("\n".join(text_blocks))
+    return "\n".join(text_blocks)
 
 
 # ---------------------------------------------------------------------------
@@ -163,50 +218,93 @@ def generate_sql(
 
 def run_question(
     question: str,
-    manifest: Path,
-    catalog: Path,
+    manifest_path: Path,
+    catalog_path: Path,
     duckdb_path: Path,
     model: str,
-) -> dict[str, Any]:
+) -> dict:
     """
-    Generate SQL with Claude and execute it against DuckDB in read-only mode.
+    Generate SQL (or an UNSUPPORTED response) for a natural-language question,
+    execute valid SQL against DuckDB, and return the result.
     """
-    # Build the semantic context programmatically from dbt artifacts.
-    context = build_context(manifest, catalog)
 
+    # Build semantic context directly from dbt artifacts.
+    context = build_context(
+        manifest_path=manifest_path,
+        catalog_path=catalog_path,
+    )
+
+    # Validate API credentials.
     api_key = os.environ.get("ANTHROPIC_API_KEY")
+
     if not api_key:
         raise RuntimeError(
-            "ANTHROPIC_API_KEY environment variable is not set"
+            "ANTHROPIC_API_KEY is not set. "
+            "Add it to your .env file or environment."
         )
 
+    # Create the Anthropic client here so generate_sql() has a consistent
+    # interface and does not need to know how credentials are loaded.
     client = Anthropic(api_key=api_key)
 
-    sql = generate_sql(
+    # Generate SQL / UNSUPPORTED response from Claude.
+    generated = generate_sql(
         client=client,
         model=model,
         question=question,
         context=context,
     )
 
-    # Open the database read-only as an additional safety boundary.
+    # Validate and classify Claude's response.
+    result = extract_sql(generated)
+
+    # Claude determined that the question cannot be answered from the
+    # documented semantic model.
+    if result.startswith("UNSUPPORTED:"):
+        return {
+            "question": question,
+            "status": "unsupported",
+            "generated_sql": None,
+            "answer": None,
+            "unsupported_reason": result.removeprefix(
+                "UNSUPPORTED:"
+            ).strip(),
+        }
+
+    sql = result
+
+    # Execute the generated read-only SQL against DuckDB.
     try:
-        with duckdb.connect(str(duckdb_path), read_only=True) as con:
-            result = con.execute(sql).fetchdf()
-            
+        conn = duckdb.connect(
+            str(duckdb_path),
+            read_only=True,
+        )
+
+        try:
+            answer_df = conn.execute(sql).fetchdf()
+        finally:
+            conn.close()
+
     except Exception as exc:
         return {
             "question": question,
+            "status": "sql_error",
             "generated_sql": sql,
             "answer": None,
             "execution_error": type(exc).__name__,
             "execution_error_message": str(exc),
         }
 
+    # Convert the DataFrame into JSON-serializable records.
+    answer = answer_df.to_dict(
+        orient="records"
+    )
+
     return {
         "question": question,
+        "status": "success",
         "generated_sql": sql,
-        "answer": result.to_dict(orient="records"),
+        "answer": answer,
     }
 
 
@@ -270,25 +368,26 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    # Resolve all paths from the project root.
     manifest_path = resolve_project_path(args.manifest)
     catalog_path = resolve_project_path(args.catalog)
     duckdb_path = resolve_project_path(args.duckdb)
 
     # Fail early with readable errors instead of opaque file/database errors.
     for label, path in (
-        ("manifest", manifest_path),
-        ("catalog", catalog_path),
+        ("Manifest", manifest_path),
+        ("Catalog", catalog_path),
         ("DuckDB database", duckdb_path),
     ):
         if not path.exists():
             raise FileNotFoundError(
-                f"{label.capitalize()} not found: {path}"
+                f"{label} not found: {path}"
             )
 
     result = run_question(
         question=args.question,
-        manifest=manifest_path,
-        catalog=catalog_path,
+        manifest_path=manifest_path,
+        catalog_path=catalog_path,
         duckdb_path=duckdb_path,
         model=args.model,
     )
@@ -303,10 +402,12 @@ def main() -> None:
 
     if args.output:
         output_path = resolve_project_path(args.output)
+
         output_path.parent.mkdir(
             parents=True,
             exist_ok=True,
         )
+
         output_path.write_text(
             output,
             encoding="utf-8",

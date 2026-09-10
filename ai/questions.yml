@@ -1,57 +1,51 @@
 questions:
-  - id: q1
-    question: "How many loads were delivered in the last full month available in the data?"
-    assumption: >-
-      Interpret "last full month available" as the latest complete calendar month before the final partial
-      delivery month. In this dataset, March 2025 has one delivery dated March 15, so February 2025 is
-      treated as the last full month, even though it has no delivered rows.
-    business_definition: "Delivered = not cancelled and delivery timestamp is present."
+  # - id: q1
+  #   question: "How many loads were delivered in the last full month available in the data?"
+  #   assumption: >-
+  #     Interpret "last full month available" as the latest complete calendar month before the final partial
+  #     delivery month. In this dataset, March 2025 has one delivery dated March 15, so February 2025 is
+  #     treated as the last full month, even though it has no delivered rows.
+  #   business_definition: "Delivered = not cancelled and delivery timestamp is present."
 
-  - id: q2
-    question: "Which shipper had the highest total book price?"
-    assumption: "Use all modeled loads, not only delivered loads, because the question does not specify delivered."
+  # - id: q2
+  #   question: "Which shipper had the highest total book price?"
+  #   assumption: "Use all modeled loads, not only delivered loads, because the question does not specify delivered."
 
-  - id: q3
-    question: "What is the average book price per load by pickup state?"
-    assumption: "Use all modeled loads and parse pickup_state from lane."
+  # - id: q3
+  #   question: "What is the average book price per load by pickup state?"
+  #   assumption: "Use all modeled loads and parse pickup_state from lane."
 
-  - id: q4
-    question: "What are the top 5 lanes by number of delivered loads?"
-    assumption: "Count delivered loads only and group by modeled lane."
+  # - id: q4
+  #   question: "What are the top 5 lanes by number of delivered loads?"
+  #   assumption: "Count delivered loads only and group by modeled lane."
 
-  - id: q5
-    question: "Which carrier moved the most loads into Texas?"
-    assumption: "Interpret moved as delivered and count delivered loads with delivery_state = TX."
+  # - id: q5
+  #   question: "Which carrier moved the most loads into Texas?"
+  #   assumption: "Interpret moved as delivered and count delivered loads with delivery_state = TX."
 
-  - id: q6
-    question: "How does the average book price compare between intrastate and interstate loads?"
-    assumption: "Use all modeled loads and the documented haul_type definition."
+  # - id: q6
+  #   question: "How does the average book price compare between intrastate and interstate loads?"
+  #   assumption: "Use all modeled loads and the documented haul_type definition."
 
-  - id: q7
-    question: "For the shipper with the most delivered loads, how did monthly volume change across the period covered by the data?"
-    assumption: "Identify the shipper by total delivered load count, then count that shipper's delivered loads by delivery month."
+  # - id: q7
+  #   question: "For the shipper with the most delivered loads, how did monthly volume change across the period covered by the data?"
+  #   assumption: "Identify the shipper by total delivered load count, then count that shipper's delivered loads by delivery month."
 
-  - id: q8
-    question: "Among lanes with at least 10 delivered loads, which had the highest average book price?"
-    assumption: "Filter lanes to at least 10 delivered loads, then rank by mean book_price across those delivered loads."
-
-  # - id: q9
-  #   question: "Which equipment type has the highest cancellation rate?"
-  #   why_it_matters: "Cancellation rate by equipment can reveal where operational risk or planning issues are concentrated."
-
-  # - id: q10
-  #   question: "Which pickup state generated the highest total P&L on delivered loads?"
-  #   why_it_matters: "This connects route origin with realized delivered-load economics and can help prioritize profitable volume."
+  # - id: q8
+  #   question: "Among lanes with at least 10 delivered loads, which had the highest average book price?"
+  #   assumption: "Filter lanes to at least 10 delivered loads, then rank by mean book_price across those delivered loads."
 
   - id: q9
     question: "what are the top 10 lanes in terms of pnl ratio?"
     why_it_matters: "Understand what lanes are more profitable in relative terms, not only gross, and might uncover better business opportunities."
-  #  assumption:  Define lane P&L ratio as total P&L divided by total book price for the lane. Use all modeled loads and exclude lanes where total book price is zero.
+    assumption:  Define lane P&L ratio as total P&L divided by total book price for the lane. Use all modeled loads and exclude lanes where total book price is zero.
+    business_definition: "pnl ratio is pnl divided by the book price"
+
 
   - id: q10
     question: "Among carriers with ratings, what is the average carrier rating and number of ratings for each carrier with rating below 3?"
     why_it_matters: "Understand how each carrier performs in comparison to others and if any of those are below quality standards."
-  #  assumption: "      Include only non-null carrier ratings. Calculate the average rating and count of ratings for each carrier that has average rating lower than 3.0."
+    assumption: "Include only non-null carrier ratings. Calculate the average rating and count of ratings for each carrier that has average rating lower than 3.0."
 
   - id: q11
     question: "What percentage of each shipper's delivered loads were profitable after accounting for transportation costs and operating overhead?"
