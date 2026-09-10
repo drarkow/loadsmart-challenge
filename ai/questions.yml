@@ -35,10 +35,27 @@ questions:
     question: "Among lanes with at least 10 delivered loads, which had the highest average book price?"
     assumption: "Filter lanes to at least 10 delivered loads, then rank by mean book_price across those delivered loads."
 
+  # - id: q9
+  #   question: "Which equipment type has the highest cancellation rate?"
+  #   why_it_matters: "Cancellation rate by equipment can reveal where operational risk or planning issues are concentrated."
+
+  # - id: q10
+  #   question: "Which pickup state generated the highest total P&L on delivered loads?"
+  #   why_it_matters: "This connects route origin with realized delivered-load economics and can help prioritize profitable volume."
+
   - id: q9
-    question: "Which equipment type has the highest cancellation rate?"
-    why_it_matters: "Cancellation rate by equipment can reveal where operational risk or planning issues are concentrated."
+    question: "what are the top 10 lanes in terms of pnl ratio?"
+    why_it_matters: "Understand what lanes are more profitable in relative terms, not only gross, and might uncover better business opportunities."
+  #  assumption:  Define lane P&L ratio as total P&L divided by total book price for the lane. Use all modeled loads and exclude lanes where total book price is zero.
 
   - id: q10
-    question: "Which pickup state generated the highest total P&L on delivered loads?"
-    why_it_matters: "This connects route origin with realized delivered-load economics and can help prioritize profitable volume."
+    question: "Among carriers with ratings, what is the average carrier rating and number of ratings for each carrier with rating below 3?"
+    why_it_matters: "Understand how each carrier performs in comparison to others and if any of those are below quality standards."
+  #  assumption: "      Include only non-null carrier ratings. Calculate the average rating and count of ratings for each carrier that has average rating lower than 3.0."
+
+  - id: q11
+    question: "What percentage of each shipper's delivered loads were profitable after accounting for transportation costs and operating overhead?"
+    what_needs_change: >-
+      The current data contains load-level P&L and transportation pricing, but does
+      not contain operating overhead or a defined overhead allocation methodology.
+      Additional cost data and a documented allocation methodology would be required.

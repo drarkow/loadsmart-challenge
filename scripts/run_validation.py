@@ -4,7 +4,7 @@ import duckdb
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = PROJECT_ROOT / "loadsmart.duckdb"
+DB_PATH = PROJECT_ROOT / "data" / "loadsmart.duckdb"
 
 
 QUERIES = {
@@ -128,6 +128,36 @@ QUERIES = {
         having count(*) >= 10
         order by 3 desc, 2 desc, 1
         limit 1
+    """,
+
+    "Q9": """
+    select
+        dl.lane,
+        sum(f.pnl) as total_pnl,
+        sum(f.book_price) as total_book_price,
+        sum(f.pnl) / nullif(sum(f.book_price), 0) as pnl_ratio,
+        count(*) as load_count
+    from main_analytics.fct_loads f
+    join main_analytics.dim_lane dl
+        using (lane_key)
+    group by 1
+    having sum(f.book_price) <> 0
+    order by pnl_ratio desc
+    limit 10;
+    """,
+
+    "Q10": """
+    select
+        dc.carrier_name,
+        avg(f.carrier_rating) as average_rating,
+        count(f.carrier_rating) as rating_count
+    from main_analytics.fct_loads f
+    join main_analytics.dim_carrier dc
+        using (carrier_key)
+    where f.carrier_rating is not null
+    group by 1
+    having avg(f.carrier_rating) < 3.0
+    order by average_rating desc, rating_count desc;
     """,
 }
 

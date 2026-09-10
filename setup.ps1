@@ -52,8 +52,10 @@ Write-Host "Checking dependency consistency..."
 
 Write-Host "Creating dbt profile..."
 New-Item -ItemType Directory -Force -Path "$HOME\.dbt" | Out-Null
-Copy-Item ".\dbt_loadsmart\profiles.yml.example" "$HOME\.dbt\profiles.yml" -Force
-
+if (-not (Test-Path "$HOME\.dbt\profiles.yml")) {
+    New-Item -ItemType Directory -Force -Path "$HOME\.dbt" | Out-Null
+    Copy-Item ".\dbt_loadsmart\profiles.yml.example" "$HOME\.dbt\profiles.yml"
+}
 Write-Host "Copying seed data..."
 Copy-Item ".\data\raw\loads.csv" ".\dbt_loadsmart\seeds\raw_loads.csv" -Force
 
