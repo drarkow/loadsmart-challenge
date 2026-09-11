@@ -59,10 +59,12 @@ The raw source is retained through `dbt seed`. Data-quality findings are investi
 │   ├── seeds/
 │   ├── dbt_project.yml
 │   └── target/                 # generated locally, not committed
+├── mcp/
+│   ├── mcp_server.py
+│   └── mcp_client_test.py
 ├── notebooks/
 │   └── export_delivered_loads.ipynb
 ├── scripts/
-│   ├── export_delivered_loads.py
 │   └── run_validation.py
 ├── .env.example
 ├── requirements.txt
@@ -166,7 +168,9 @@ A dbt test with warning severity does **not** remove data. It reports violating 
 
 ## AI-over-the-model layer
 
-The AI exercise follows the challenge requirement that dbt YAML is the contract between the semantic model and the AI. The challenge explicitly requires schema context to be generated programmatically from `manifest.json` / `catalog.json`, not hand-written into the prompt, and prohibits sending table rows as context. citeturn12file4
+The AI exercise follows the challenge requirement that dbt YAML is the contract between the semantic model and the AI. The challenge explicitly requires schema context to be generated programmatically from `manifest.json` / `catalog.json`, not hand-written into the prompt, and prohibits sending table rows as context.
+
+The AI query layer is also exposed as an MCP server through a single ask_loadsmart tool. The tool accepts a natural-language analytics question, generates SQL from dbt-derived metadata, validates the SQL as read-only, executes it against DuckDB, and returns the generated SQL and answer through MCP.
 
 ### Flow
 
@@ -227,7 +231,7 @@ The full generated SQL and answer payloads are retained in `analysis/claude_ques
 
 ## Ambiguity and business assumptions
 
-The challenge explicitly notes that some questions are intentionally ambiguous and asks the candidate to state the assumptions made. citeturn12file5
+The challenge explicitly notes that some questions are intentionally ambiguous and asks the candidate to state the assumptions made. 
 
 Important assumptions in this solution include:
 
@@ -257,7 +261,7 @@ A positive load-level `pnl` is not treated as equivalent to profitability after 
 
 ## AI iteration log
 
-The challenge requires an initial run, identification of incorrect or ambiguous responses, a decision on whether the fix belongs in the prompt, YAML documentation, or the model, followed by a rerun and before/after comparison. citeturn12file7
+The challenge requires an initial run, identification of incorrect or ambiguous responses, a decision on whether the fix belongs in the prompt, YAML documentation, or the model, followed by a rerun and before/after comparison. 
 
 | Question | First run | Diagnosis | Fix | Final run |
 |---|---|---|---|---|
@@ -268,7 +272,7 @@ The challenge requires an initial run, identification of incorrect or ambiguous 
 
 ### Why Q9 was left unresolved
 
-The challenge emphasizes that dbt YAML should function as the contract between the semantic model and the AI. citeturn12file4 Rather than injecting the question's `business_definition` from `questions.yml` into the Claude prompt, the implementation keeps Claude dependent only on generated dbt artifacts. This makes Q9 a useful demonstration of a genuine semantic-layer gap: the model contains the underlying measures, but the business metric itself is not yet documented in dbt.
+The challenge emphasizes that dbt YAML should function as the contract between the semantic model and the AI. Rather than injecting the question's `business_definition` from `questions.yml` into the Claude prompt, the implementation keeps Claude dependent only on generated dbt artifacts. This makes Q9 a useful demonstration of a genuine semantic-layer gap: the model contains the underlying measures, but the business metric itself is not yet documented in dbt.
 
 ### Why Q10 required documentation rather than prompt changes
 
@@ -368,4 +372,38 @@ The AI execution layer opens DuckDB in read-only mode and rejects SQL containing
 
 ## Scope and optional items
 
-The core submission focuses on the required areas: dimensional modeling, tests, documentation, data-quality investigation, AI-over-the-model, the required question set, iteration log, and Python export. The BI report is optional in the challenge. citeturn11file0
+The core submission focuses on the required areas: dimensional modeling, tests, documentation, data-quality investigation, AI-over-the-model, the required question set, iteration log, and Python export. The BI report is optional in the challenge. 
+
+## MCP bonus
+
+The AI query layer is also exposed as an MCP server through the
+`ask_loadsmart` tool.
+
+The MCP server reuses the same analytics implementation used by
+`ai/run_questions.py`:
+
+1. Read dbt `manifest.json` and `catalog.json`
+2. Build metadata-only semantic context
+3. Generate SQL with Claude
+4. Validate the SQL as read-only
+5. Execute it against DuckDB
+6. Return the generated SQL and answer
+
+No table rows are sent to the LLM as context.
+
+### Start the MCP server
+
+From the repository root:
+
+```powershell
+python mcp\mcp_server.py
+```
+
+The local MCP endpoint is: http://127.0.0.1:8000/mcp
+
+To test, in another terminal, run: 
+```
+python mcp\mcp_client_test.py
+```
+
+

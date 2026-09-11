@@ -67,3 +67,11 @@ Write-Host "  dbt debug"
 Write-Host "  dbt seed"
 Write-Host "  dbt build"
 Write-Host "  dbt docs generate"
+
+Write-Host "Checking MCP SDK..."
+& $venvPython -c "import mcp; print('MCP SDK:', mcp.__version__)"
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "MCP SDK installation failed."
+    exit 1
+}
