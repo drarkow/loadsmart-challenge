@@ -280,24 +280,12 @@ The model contains load-level P&L, but the question asks for profitability **aft
 
 ## Python export
 
-The challenge requests a Jupyter Notebook and Python script that read the dimensional model and export the delivered loads in the last available month. citeturn11file0
+The challenge requests a Jupyter Notebook that read the dimensional model and export the delivered loads in the last available month.
 
 The requested notebook is:
 
 ```text
 notebooks/export_delivered_loads.ipynb
-```
-
-The reusable Python implementation is:
-
-```text
-scripts/export_delivered_loads.py
-```
-
-Run the script directly from the repository root:
-
-```powershell
-python scripts\export_delivered_loads.py
 ```
 
 The export includes the requested fields:
@@ -368,6 +356,7 @@ Key outputs produced by the solution are:
 | `analysis/dbt_semantic_context.json` | Human-inspectable generated semantic context |
 | `analysis/claude_question_runs.jsonl` | AI-generated SQL, execution status, and answers |
 | `analysis/iteration_log.md` | Before/after AI iteration analysis |
+| `analysis/delivery_loads_latest_available_month.md` | CSV exported by the Notebook with data from latest available month |
 
 Generated `target/` artifacts and the DuckDB database are intentionally reproducible and do not need to be committed to version control.
 
