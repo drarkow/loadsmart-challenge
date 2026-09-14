@@ -48,6 +48,11 @@ The raw source is retained through `dbt seed`. Data-quality findings are investi
 │   ├── dbt_semantic_context.json
 │   ├── iteration_log.md
 │   ├── claude_question_runs.jsonl
+├── bi/
+│   ├── DAX_measures.md
+│   ├── ODBC_SETUP.md
+│   ├── README.md
+│   └── loadsmart_dashboard.pbix
 ├── data/
 │   └── raw/
 │       └── loads.csv
@@ -58,6 +63,9 @@ The raw source is retained through `dbt seed`. Data-quality findings are investi
 │   ├── seeds/
 │   ├── dbt_project.yml
 │   └── target/                 # generated locally, not committed
+├── mcp/
+│   ├── mcp_client.py
+│   ├── mcp_server.py
 ├── notebooks/
 │   └── export_delivered_loads.ipynb
 ├── scripts/
@@ -375,6 +383,7 @@ Key outputs produced by the solution are:
 | `analysis/dbt_semantic_context.json` | Human-inspectable generated semantic context |
 | `analysis/claude_question_runs.jsonl` | AI-generated SQL, execution status, and answers |
 | `analysis/iteration_log.md` | Before/after AI iteration analysis |
+| `bi/loadsmart_dashboard.pbix` | Dashboard from dbt model in PowerBI |
 
 Generated `target/` artifacts and local DuckDB databases are intentionally reproducible and should not be committed to version control.
 
