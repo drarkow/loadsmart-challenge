@@ -62,20 +62,18 @@ KPI cards:
 
 Visuals:
 
-- Monthly delivered-load trend
-- Monthly book price trend
+- Monthly delivered-load and P&L margin trend
 - Delivered loads by haul type
 - Top 10 shippers by book price
 
-### 2. Lane & Geography
+### 2. Lanes
 
-Visuals:
-
-- Top 10 lanes by delivered loads
-- Top 10 lanes by average book price
-- Pickup state: average book price and load count
+- Lanes by delivered loads
+- Delivery loads by pickup state (map)
+- Delivery loads by delivery state (map)
+- Delivery loads by pickup city 
+- Delivery loads by delivery city
 - Intrastate vs interstate comparison
-- Texas inbound carrier ranking
 
 ### 3. Carrier Performance
 
@@ -84,17 +82,7 @@ Visuals:
 - Loads by carrier
 - Average carrier rating
 - Carrier on-time performance
-- Delivered loads vs P&L
-- Carrier performance table with conditional formatting
-
-### 4. Shipper Performance
-
-Visuals:
-
-- Delivered loads by shipper
-- Book price by shipper
-- P&L by shipper
-- Monthly volume for the selected shipper
+- Delivered loads P&L by carrier
 
 ## Important semantic choices
 
@@ -104,18 +92,6 @@ Visuals:
 - P&L margin is calculated as `P&L / Book Price` and should be clearly labeled as a reporting ratio, not treated as an independently documented source metric.
 - Zero prices are retained in the model; metrics should not silently filter them unless the visual explicitly documents the reason.
 
-## Suggested slicers
-
-- Delivery year/month
-- Shipper
-- Carrier
-- Pickup state
-- Delivery state
-- Haul type
-- Equipment type
-- Sourcing channel
-- VIP carrier
-
 ## DAX
 
-See `DAX_measures.md` for the recommended measures and inactive-date examples.
+See `DAX_measures.md` for the measures and inactive-date examples.

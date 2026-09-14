@@ -32,6 +32,8 @@ Import:
 - `main_analytics.dim_lane`
 - `main_analytics.dim_date`
 
+**Important: On PowerBI, disable the parallel loading of table in File → Options and settings → Options → Current File → Data Load, otherwise Duckdb data will not be loaded as import**
+
 ## 4. Rebuild after dbt changes
 
 If the dbt model changes, regenerate the DuckDB database before refreshing Power BI:

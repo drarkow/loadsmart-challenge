@@ -13,7 +13,7 @@ COUNTROWS('fct_loads')
 Delivered Loads =
 CALCULATE(
     [Total Loads],
-    'fct_loads'[is_delivered] = TRUE()
+    'fct_loads'[is_delivered] = "True"
 )
 ```
 
@@ -41,7 +41,7 @@ AVERAGE('fct_loads'[book_price])
 Delivered Book Price =
 CALCULATE(
     [Total Book Price],
-    'fct_loads'[is_delivered] = TRUE()
+    'fct_loads'[is_delivered] = "True"
 )
 ```
 
@@ -49,7 +49,7 @@ CALCULATE(
 Delivered Average Book Price =
 CALCULATE(
     [Average Book Price],
-    'fct_loads'[is_delivered] = TRUE()
+    'fct_loads'[is_delivered] = "True"
 )
 ```
 
@@ -64,7 +64,7 @@ SUM('fct_loads'[pnl])
 Delivered P&L =
 CALCULATE(
     [Total P&L],
-    'fct_loads'[is_delivered] = TRUE()
+    'fct_loads'[is_delivered] = "True"
 )
 ```
 
